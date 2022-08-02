@@ -111,19 +111,37 @@ class _CandidateTile extends StatelessWidget {
   _CandidateTile({Key? key, required this.candidate}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.blue[100],
-          child: Text(candidate.getInitial()),
+  Widget build(BuildContext context) => Dismissible(
+        key: UniqueKey(),
+        direction: DismissDirection.startToEnd,
+        onDismissed: ((direction) => debugPrint('${candidate.name} deleted')),
+        background: Container(
+          padding: const EdgeInsets.only(left: 10.0),
+          color: Colors.red,
+          child: const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Delete candidate',
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              )),
         ),
-        title: Text(candidate.name),
-        trailing: Text(
-          '${candidate.votes}',
-          style: const TextStyle(
-              fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.blue),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Colors.blue[100],
+            child: Text(candidate.getInitial()),
+          ),
+          title: Text(candidate.name),
+          trailing: Text(
+            '${candidate.votes}',
+            style: const TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue),
+          ),
+          onTap: () {
+            debugPrint(candidate.name);
+          },
         ),
-        onTap: () {
-          debugPrint(candidate.name);
-        },
       );
 }
