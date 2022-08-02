@@ -1,9 +1,9 @@
 class Candidate {
-  String id;
+  String? id;
   String name;
-  int votes;
+  int? votes;
 
-  Candidate({required this.id, required this.name, required this.votes});
+  Candidate({this.id, required this.name, this.votes});
 
   factory Candidate.fromMap(Map<String, dynamic> obj) =>
       Candidate(id: obj['id'], name: obj['name'], votes: obj['votes']);

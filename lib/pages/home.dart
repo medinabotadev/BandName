@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:votes_app/models/candidate.dart';
 
 class HomePage extends StatefulWidget {
@@ -36,10 +40,69 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         elevation: 0,
-        onPressed: () {},
+        onPressed: addNewCandidate,
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void addNewCandidate() {
+    final TextEditingController textController = TextEditingController();
+    if (Platform.isAndroid) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('New candidate name'),
+              content: TextField(
+                controller: textController,
+              ),
+              actions: [
+                MaterialButton(
+                  onPressed: () => addCandidateToList(textController.text),
+                  elevation: 0,
+                  color: Colors.blue,
+                  child: const Text(
+                    'Add',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              ],
+            );
+          });
+    }
+
+    showCupertinoDialog(
+        context: context,
+        builder: (context) {
+          return CupertinoAlertDialog(
+            title: Text('New candidate name'),
+            content: CupertinoTextField(
+              controller: textController,
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                child: Text('Add'),
+                onPressed: () => addCandidateToList(textController.text),
+              ),
+              CupertinoDialogAction(
+                isDestructiveAction: true,
+                child: Text('Cancel'),
+                onPressed: () => Navigator.pop(context),
+              )
+            ],
+          );
+        });
+  }
+
+  void addCandidateToList(String name) {
+    if (name.length > 1) {
+      candidates.add(Candidate(id: null, name: name, votes: 0));
+      setState(() {});
+    }
+
+    Navigator.pop(context);
   }
 }
 
@@ -60,7 +123,7 @@ class _CandidateTile extends StatelessWidget {
               fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.blue),
         ),
         onTap: () {
-          print(candidate.name);
+          debugPrint(candidate.name);
         },
       );
 }
