@@ -2,23 +2,47 @@ import 'package:flutter/material.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
-enum ServerStatus { online, fffline, connecting }
+enum ServerStatus { online, offline, connecting }
 
 class SocketService with ChangeNotifier {
-  final ServerStatus _serverStatus = ServerStatus.connecting;
+  ServerStatus _serverStatus = ServerStatus.connecting;
+  late io.Socket _socket;
+
+  ServerStatus get serverStatus => _serverStatus;
+  io.Socket get socket => _socket;
 
   SocketService() {
     _initConfig();
   }
 
   void _initConfig() {
-    io.Socket socket = io.io('http://localhost:3000/', {
+    _socket = io.io('http://localhost:3000/', {
       'transports': ['websocket'],
       'autoConnect': true,
     });
-    socket.onConnect((_) {
-      debugPrint('connect');
+    _socket.onConnecting((_) {
+      debugPrint('connecting');
+      _serverStatus = ServerStatus.connecting;
+      notifyListeners();
     });
-    socket.onDisconnect((_) => debugPrint('disconnect'));
+    _socket.onConnect((_) {
+      debugPrint('connect');
+      _serverStatus = ServerStatus.online;
+      notifyListeners();
+    });
+    _socket.onDisconnect((_) {
+      debugPrint('disconnect');
+      _serverStatus = ServerStatus.offline;
+      notifyListeners();
+    });
+    // socket.on('new-message', (payload) {
+    //   debugPrint('new-message:');
+    //   debugPrint('name:' + payload['name']);
+    //   debugPrint('message:' + payload['message']);
+    //   debugPrint('message2:' +
+    //       (payload.containsKey('mensaje2')
+    //           ? payload['message2']
+    //           : 'no hay segundo mensaje'));
+    // });
   }
 }
