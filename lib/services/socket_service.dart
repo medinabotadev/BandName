@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -16,7 +18,7 @@ class SocketService with ChangeNotifier {
   }
 
   void _initConfig() {
-    _socket = io.io('http://localhost:3000/', {
+    _socket = io.io(Platform.isAndroid ? 'http://10.0.2.2:3000/' : 'http://localhost:3000/', {
       'transports': ['websocket'],
       'autoConnect': true,
     });

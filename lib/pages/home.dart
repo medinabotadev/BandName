@@ -15,13 +15,26 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Candidate> candidates = [
-    Candidate(id: '1', name: 'Medina', votes: 14),
-    Candidate(id: '2', name: 'Gonzalez', votes: 3),
-    Candidate(id: '3', name: 'Robens', votes: 6),
-    Candidate(id: '4', name: 'Mendoza', votes: 4),
-    Candidate(id: '5', name: 'Trump', votes: 10),
-  ];
+  List<Candidate> candidates = [];
+
+  @override
+  void initState() {
+    final SocketService socketService = Provider.of(context, listen: false);
+    socketService.socket.on('active-candidates', (payload) {
+      candidates = (payload as List).map((candidate) {
+        return Candidate.fromMap(candidate);
+      }).toList();
+      setState(() {});
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    final SocketService socketService = Provider.of(context, listen: false);
+    socketService.socket.off('active-candidates');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +102,7 @@ class _HomePageState extends State<HomePage> {
               ],
             );
           });
+      return;
     }
 
     showCupertinoDialog(
@@ -116,9 +130,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void addCandidateToList(String name) {
+    final SocketService socketService =
+        Provider.of<SocketService>(context, listen: false);
     if (name.length > 1) {
-      candidates.add(Candidate(id: null, name: name, votes: 0));
-      setState(() {});
+      socketService.socket.emit('add-candidate', Candidate(name: name).toMap());
     }
 
     Navigator.pop(context);
@@ -130,37 +145,40 @@ class _CandidateTile extends StatelessWidget {
   _CandidateTile({Key? key, required this.candidate}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => Dismissible(
-        key: UniqueKey(),
-        direction: DismissDirection.startToEnd,
-        onDismissed: ((direction) => debugPrint('${candidate.name} deleted')),
-        background: Container(
-          padding: const EdgeInsets.only(left: 10.0),
-          color: Colors.red,
-          child: const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Delete candidate',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              )),
+  Widget build(BuildContext context) {
+    final SocketService socketService =
+        Provider.of<SocketService>(context, listen: false);
+    return Dismissible(
+      key: UniqueKey(),
+      direction: DismissDirection.startToEnd,
+      onDismissed: ((direction) =>
+          socketService.socket.emit('delete-candidate', candidate.toMap())),
+      background: Container(
+        padding: const EdgeInsets.only(left: 10.0),
+        color: Colors.red,
+        child: const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Delete candidate',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            )),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue[100],
+          child: Text(candidate.getInitial()),
         ),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.blue[100],
-            child: Text(candidate.getInitial()),
-          ),
-          title: Text(candidate.name),
-          trailing: Text(
-            '${candidate.votes}',
-            style: const TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue),
-          ),
-          onTap: () {
-            debugPrint(candidate.name);
-          },
+        title: Text(candidate.name),
+        trailing: Text(
+          '${candidate.votes}',
+          style: const TextStyle(
+              fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.blue),
         ),
-      );
+        onTap: () {
+          socketService.socket.emit('vote-candidate', candidate.toMap());
+        },
+      ),
+    );
+  }
 }
