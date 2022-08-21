@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pie_chart/pie_chart.dart';
 import 'package:provider/provider.dart';
 
 import 'package:votes_app/models/candidate.dart';
@@ -20,13 +21,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     final SocketService socketService = Provider.of(context, listen: false);
-    socketService.socket.on('active-candidates', (payload) {
-      candidates = (payload as List).map((candidate) {
-        return Candidate.fromMap(candidate);
-      }).toList();
-      setState(() {});
-    });
+    socketService.socket.on('active-candidates', _handleActiveCandidates);
     super.initState();
+  }
+
+  void _handleActiveCandidates(dynamic payload) {
+    candidates = (payload as List).map((candidate) {
+      return Candidate.fromMap(candidate);
+    }).toList();
+    setState(() {});
   }
 
   @override
@@ -64,11 +67,19 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.white,
       ),
-      body: ListView.builder(
-        itemCount: candidates.length,
-        itemBuilder: (context, index) {
-          return _CandidateTile(candidate: candidates[index]);
-        },
+      body: Column(
+        children: <Widget>[
+          _showChart(),
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: candidates.length,
+              itemBuilder: (context, index) {
+                return _CandidateTile(candidate: candidates[index]);
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         elevation: 0,
@@ -137,6 +148,27 @@ class _HomePageState extends State<HomePage> {
     }
 
     Navigator.pop(context);
+  }
+
+  _showChart() {
+    Map<String, double> dataMap = Map();
+    if (candidates.isEmpty) {
+      dataMap.putIfAbsent('No data', () => 0);
+    } else {
+      candidates.forEach((candidate) {
+        dataMap.putIfAbsent(candidate.name, () => candidate.votes!.toDouble());
+      });
+    }
+
+    return Expanded(
+      child: Container(
+          width: double.infinity,
+          height: 200,
+          child: PieChart(
+            dataMap: dataMap,
+            chartType: ChartType.ring,
+          )),
+    );
   }
 }
 
